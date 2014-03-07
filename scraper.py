@@ -6,22 +6,48 @@ import sys
 BASE_URL = "http://www.fanfiction.net/s/%s/%i/"
 
 # Parses the story page removing all unnecessary sections
-class Parser:
+class Scraper:
 	def __init__(self, story_id, chapter):
+		print("Downloading ID: %s, Ch. %i ... " % (story_id, chapter), end="")
 		try:
 			html = urlopen(BASE_URL % (story_id, chapter)).read()
 		except:
-			sys.exit("Story %s, chapter %i not found" % (story_id, chapter))
-		#print("Story %s, chapter %i downloaded" % (story_id, chapter))
+			sys.exit("Not found")
+		print("Done")
 		self.soup = BeautifulSoup(html)
+		self.image_addr = None
+		self.parsed = False
 
-	# Get the number of chapters
+	# Get the number of chapters, used only after the parsing, otherwise returns None
 	def get_chapters(self):
+		if self.parsed == False:
+			return None
+		tag = self.soup.p.next_sibling.next_sibling
+		list = tag.string.split()
+		for i in range(0, len(list)):
+			if list[i] == "Chapters:":
+				return list[i+1]
+		# Something odd happened
 		return 1
 
+	# This is done automatically before parsing or it can be done manually
+	def get_story_image_address(self):
+		if self.image_addr != None:
+			return self.image_addr
+		image_tag = self.soup.find("div", id="img_large").img
+		if image_tag.get("data-original") != None:
+			return image_tag["data-original"][2:]
+		return image_tag["src"][2:]
+
 	def parse(self):
+		print("Parsing ... ", end="")
+		self.image_addr = self.get_story_image_address()
 		self.remove_scripts()
 		self.remove_extras()
+		self.parsed = True
+		print("Done")
+		# At this point the file is not valid xhtml, it needs to be run through tidy
+		return self.soup.prettify()
 
 	def remove_scripts(self):
 		num_of_scripts = len(self.soup.find_all("script"))
@@ -59,6 +85,10 @@ class Parser:
 		story_tags.string = story_tags_string
 		story_text.attrs = None
 		story_text.div.attrs = None
+		# horizontal lines are screwed up in the end result, they have to be fixed with a regex?
+		hr_tags = story_text.find_all("hr")
+		for hr_tag in hr_tags:
+			hr_tag.attrs = None
 		
 		# Recreate html body with the extracted content
 		self.soup.body.clear()
@@ -69,12 +99,9 @@ class Parser:
 		self.soup.body.append(story_tags)
 		self.soup.body.append(story_text)
 
-	def print_test(self):
-		print(self.soup.prettify())
+		# Add a link to a stylesheet for the ePub (always ../styles.css)
+		def add_stylesheet(self):
+			pass
 
 if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		sys.exit("Usage: %s story-id" % sys.argv[0])
-	parser = Parser(sys.argv[1], 2)
-	parser.parse()
-	parser.print_test()
+	sys.exit("Run from ffnet_epub_creator.py")
