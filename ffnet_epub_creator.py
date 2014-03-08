@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	book_name = scraper_ch1.get_book_name()
 	# Create a folder for the story
 	os.makedirs(os.path.join(book_name, "Content", "Chapters"), exist_ok=True) # Python 3.2 required
-	with open("%s/Content/Chapters/ch1.html" % book_name, "w") as file:
+	with open("%s/Content/Chapters/ch1.html" % book_name, encoding="utf-8", mode="w") as file:
 		file.write(ch1)
 	cover_address = scraper_ch1.get_story_image_address()
 
@@ -31,22 +31,22 @@ if __name__ == "__main__":
 		for i in range(2, chapters+1):
 			scraper = Scraper(story_id, i)
 			chapter = scraper.parse()
-			with open("%s/Content/Chapters/ch%d.html" % (book_name, i), "w") as file:
+			with open("%s/Content/Chapters/ch%d.html" % (book_name, i), encoding="utf-8", mode="w") as file:
 				file.write(chapter)
 
 	# Tidy HTML files
 	print("Converting to XHTML")
 	for i in range(1, chapters+1):
-		call("tidy -asxhtml -m \"%s/Content/Chapters/ch%d.html\"" % (book_name, i))
+		call("tidy -asxhtml -utf8 -m \"%s/Content/Chapters/ch%d.html\"" % (book_name, i))
 
 	# Create mimetype file
 	print("Creating mimetype file")
-	with open("%s/mimetype" % book_name, "w") as file:
+	with open("%s/mimetype" % book_name, encoding="utf-8", mode="w") as file:
 		file.write("application/epub+zip")
 
 	# Create a simple stylesheet
 	print("Creating stylesheet")
-	with open("%s/Content/styles.css" % book_name, "w") as stylesheet:
+	with open("%s/Content/styles.css" % book_name, encoding="utf-8", mode="w") as stylesheet:
 		stylesheet.write(
 		"""@page {
 	margin-bottom: 5pt;
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
 	# Create titlepage
 	print("Creating titlepage with the cover image")
-	with open("%s/Content/titlepage.html" % book_name, "w") as titlepage:
+	with open("%s/Content/titlepage.html" % book_name, encoding="utf-8", mode="w") as titlepage:
 		titlepage.write(
 		"""<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
 	# Build TOC
 	print("Building table of contents")
-	with open("%s/Content/toc.ncx" % book_name, "w") as toc:
+	with open("%s/Content/toc.ncx" % book_name, encoding="utf-8", mode="w") as toc:
 		toc.write(
 		"""<?xml version='1.0' encoding='utf-8'?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="eng">
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 	# Create container.xml
 	print("Creating container.xml")
 	os.makedirs(os.path.join(book_name, "META-INF"), exist_ok=True)
-	with open("%s/META-INF/container.xml" % book_name, "w") as container:
+	with open("%s/META-INF/container.xml" % book_name, encoding="utf-8", mode="w") as container:
 		container.write(
 		"""<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -113,17 +113,18 @@ if __name__ == "__main__":
 </container>""")
 
 	# Create contents list
-	with open("%s/Content/content.opf" % book_name, "w") as contents:
+	with open("%s/Content/content.opf" % book_name, encoding="utf-8", mode="w") as contents:
 		contents.write(
 		"""<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid-id" version="2.0">
 <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
 <dc:identifier id="uuid-id">aleksi-blinnikka-python-epub-%s</dc:identifier>
-<dc:creator opf:file-as="%s" opf:role="aut">%s</dc:creator>""" % (story_id, scraper.get_author(), scraper.get_author()))
+<dc:creator opf:file-as="%s" opf:role="aut">%s</dc:creator>""" % (story_id, scraper_ch1.get_author(), scraper_ch1.get_author()))
 		time_struct = time.gmtime()
 		current_time = "%d-%02d-%02dT%02d:%02d:%02d+00:00" % (time_struct[0], time_struct[1], time_struct[2], time_struct[3], time_struct[4], time_struct[5])
 		contents.write(
-		"""<dc:date>%s</dc:date>
+		"""<dc:title>%s</dc:title>
+<dc:date>%s</dc:date>
 <meta name="cover" content="cover.jpg" />
 <dc:language>en</dc:language>
 <dc:contributor opf:role="bkp"></dc:contributor>
@@ -132,7 +133,7 @@ if __name__ == "__main__":
 <item href="cover.jpg" id="cover" media-type="image/jpeg" />
 <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml" />
 <item href="styles.css" id="styles" media-type="text/css" />
-<item href="titlepage.html" id="titlepage" media-type="application/xhtml+xml" />""" % current_time)
+<item href="titlepage.html" id="titlepage" media-type="application/xhtml+xml" />""" % (scraper_ch1.get_title(), current_time))
 		for i in range(1, chapters+1):
 			contents.write("""<item href="Chapters/ch%d.html" id="ch%d" media-type="application/xhtml+xml" />""" % (i, i))
 		contents.write(
