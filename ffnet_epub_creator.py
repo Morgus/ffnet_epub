@@ -1,3 +1,6 @@
+# ffnet_epub_creator.py
+# Copyright (c) Aleksi Blinnikka 7-8.3.2014
+
 import sys, os, zipfile, shutil, extra_files
 from urllib.request import urlopen, Request
 from subprocess import call

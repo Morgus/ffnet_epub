@@ -1,3 +1,6 @@
+# scraper.py
+# Copyright (c) Aleksi Blinnikka 7-8.3.2014
+
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import sys, re

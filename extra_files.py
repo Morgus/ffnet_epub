@@ -1,4 +1,7 @@
-import time
+# extra_files.py
+# Copyright (c) Aleksi Blinnikka 8.3.2014
+
+import time, sys
 
 def create_mimetype(book_name):
 	with open("%s/mimetype" % book_name, encoding="utf-8", mode="w") as file:
@@ -92,3 +95,6 @@ def create_content_list(book_name, title, author, story_id, chapters):
 """</spine>
 <guide><reference href="titlepage.html" type="cover" title="Cover"/></guide>
 </package>""")
+
+if __name__ == "__main__":
+	sys.exit("Run from ffnet_epub_creator.py")
