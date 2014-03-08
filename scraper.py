@@ -1,6 +1,6 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-import sys
+import sys, re
 
 # Story URL base
 BASE_URL = "http://www.fanfiction.net/s/%s/%i/"
@@ -17,6 +17,8 @@ class Scraper:
 		self.soup = BeautifulSoup(html)
 		self.image_addr = None
 		self.parsed = False
+		self.title = None
+		self.author = None
 
 	# Get the number of chapters, used only after the parsing, otherwise returns None
 	def get_chapters(self):
@@ -27,8 +29,8 @@ class Scraper:
 		for i in range(0, len(list)):
 			if list[i] == "Chapters:":
 				return list[i+1]
-		# Something odd happened
-		return 1
+		# If there is only one chapter there is no Chapters: string
+		return '1'
 
 	# This is done automatically before parsing or it can be done manually
 	def get_story_image_address(self):
@@ -36,14 +38,15 @@ class Scraper:
 			return self.image_addr
 		image_tag = self.soup.find("div", id="img_large").img
 		if image_tag.get("data-original") != None:
-			return image_tag["data-original"][2:]
-		return image_tag["src"][2:]
+			return "https:" + image_tag["data-original"]
+		return "https:" + image_tag["src"]
 
 	def parse(self):
 		print("Parsing ... ", end="")
 		self.image_addr = self.get_story_image_address()
 		self.remove_scripts()
 		self.remove_extras()
+		self.add_stylesheet()
 		self.parsed = True
 		print("Done")
 		# At this point the file is not valid xhtml, it needs to be run through tidy
@@ -68,7 +71,6 @@ class Scraper:
 		# Extract story text
 		story_text = self.soup.find("div", id="storytextp").extract()
 		# Make extracted tags paragraphs (title h1, story text stays as a div)
-		#del story_title["class"]
 		story_title.attrs = None
 		story_title.name = "h1"
 		story_author.attrs = None
@@ -99,9 +101,26 @@ class Scraper:
 		self.soup.body.append(story_tags)
 		self.soup.body.append(story_text)
 
-		# Add a link to a stylesheet for the ePub (always ../styles.css)
-		def add_stylesheet(self):
-			pass
+		# Get the title and author for naming the ePub
+		self.title = story_title.string
+		self.author = story_author.string
+
+	def get_title(self):
+		return self.title
+
+	def get_author(self):
+		return self.author
+
+	# Change illegal characters for directory names to dashes
+	def get_book_name(self):
+		book_name = self.author.string + " - " + self.title.string
+		book_name = re.sub('[/\\:*?"<>|]', '-', book_name)
+		return book_name
+
+	# Add a link to a stylesheet for the ePub (always ../styles.css)
+	def add_stylesheet(self):
+		link_tag = self.soup.new_tag("link", rel="stylesheet", type="text/css", href="../styles.css")
+		self.soup.head.append(link_tag)
 
 if __name__ == "__main__":
 	sys.exit("Run from ffnet_epub_creator.py")
