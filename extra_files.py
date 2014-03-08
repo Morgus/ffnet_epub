@@ -3,6 +3,9 @@
 
 import time, sys
 
+# Not much can be done to comment this, these files are required to be created for a working ePub.
+# Each file is pretty much as simple as it can be while still having enough information.
+
 def create_mimetype(book_name):
 	with open("%s/mimetype" % book_name, encoding="utf-8", mode="w") as file:
 		file.write("application/epub+zip")
@@ -65,7 +68,7 @@ def create_content_list(book_name, title, author, story_id, chapters):
 <dc:identifier id="uuid-id">aleksi-blinnikka-python-epub-%s</dc:identifier>
 <dc:creator opf:file-as="%s" opf:role="aut">%s</dc:creator>""" % (story_id, author, author))
 		time_struct = time.gmtime()
-		# Format the current time
+		# Format the current time correctly
 		current_time = "%d-%02d-%02dT%02d:%02d:%02d+00:00" % (
 		time_struct[0], time_struct[1], time_struct[2], time_struct[3], time_struct[4], time_struct[5]
 		)
