@@ -41,7 +41,7 @@ if __name__ == "__main__":
 	# Tidy HTML files
 	print("Converting to XHTML")
 	for i in range(1, chapters+1):
-		call("tidy -asxhtml -utf8 -m \"%s/Content/Chapters/ch%d.html\"" % (book_name, i))
+		call(["tidy", "-asxhtml", "-utf8", "-m", "%s/Content/Chapters/ch%d.html" % (story_id, i)])
 
 	# Create mimetype file
 	print("Creating mimetype file")
