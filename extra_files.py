@@ -6,20 +6,20 @@ import time, sys
 # Not much can be done to comment this, these files are required to be created for a working ePub.
 # Each file is pretty much as simple as it can be while still having enough information.
 
-def create_mimetype(book_name):
-	with open("%s/mimetype" % book_name, encoding="utf-8", mode="w") as file:
+def create_mimetype(story_id):
+	with open("%s/mimetype" % story_id, encoding="utf-8", mode="w") as file:
 		file.write("application/epub+zip")
 
-def create_stylesheet(book_name):
-	with open("%s/Content/styles.css" % book_name, encoding="utf-8", mode="w") as stylesheet:
+def create_stylesheet(story_id):
+	with open("%s/Content/styles.css" % story_id, encoding="utf-8", mode="w") as stylesheet:
 		stylesheet.write(
 """@page {
 	margin-bottom: 5pt;
 	margin-top: 5pt;
 }""")
 
-def create_titlepage(book_name):
-	with open("%s/Content/titlepage.html" % book_name, encoding="utf-8", mode="w") as titlepage:
+def create_titlepage(story_id):
+	with open("%s/Content/titlepage.html" % story_id, encoding="utf-8", mode="w") as titlepage:
 		titlepage.write(
 """<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -28,8 +28,8 @@ def create_titlepage(book_name):
 <body><img alt="" height="100%" src="cover.jpg" /></body>
 </html>""")
 
-def create_toc(book_name, title, story_id, chapters):
-	with open("%s/Content/toc.ncx" % book_name, encoding="utf-8", mode="w") as toc:
+def create_toc(story_id, title, chapters):
+	with open("%s/Content/toc.ncx" % story_id, encoding="utf-8", mode="w") as toc:
 		toc.write(
 """<?xml version='1.0' encoding='utf-8'?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="eng">
@@ -51,16 +51,16 @@ def create_toc(book_name, title, story_id, chapters):
 """</navMap>
 </ncx>""")
 
-def create_container(book_name):
-	with open("%s/META-INF/container.xml" % book_name, encoding="utf-8", mode="w") as container:
+def create_container(story_id):
+	with open("%s/META-INF/container.xml" % story_id, encoding="utf-8", mode="w") as container:
 		container.write(
 """<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
 <rootfiles><rootfile full-path="Content/content.opf" media-type="application/oebps-package+xml" /></rootfiles>
 </container>""")
 
-def create_content_list(book_name, title, author, story_id, chapters):
-	with open("%s/Content/content.opf" % book_name, encoding="utf-8", mode="w") as contents:
+def create_content_list(story_id, title, author, chapters):
+	with open("%s/Content/content.opf" % story_id, encoding="utf-8", mode="w") as contents:
 		contents.write(
 """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid-id" version="2.0">

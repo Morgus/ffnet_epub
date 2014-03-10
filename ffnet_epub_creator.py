@@ -15,15 +15,15 @@ if __name__ == "__main__":
 	ch1 = scraper_ch1.parse()
 	book_name = scraper_ch1.get_book_name()
 	# Create temporary folders for the story
-	os.makedirs(os.path.join(book_name, "Content", "Chapters"), exist_ok=True) # Python 3.2 required
-	os.makedirs(os.path.join(book_name, "META-INF"), exist_ok=True)
-	with open("%s/Content/Chapters/ch1.html" % book_name, encoding="utf-8", mode="w") as file:
+	os.makedirs(os.path.join(story_id, "Content", "Chapters"), exist_ok=True) # Python 3.2 required
+	os.makedirs(os.path.join(story_id, "META-INF"), exist_ok=True)
+	with open("%s/Content/Chapters/ch1.html" % story_id, encoding="utf-8", mode="w") as file:
 		file.write(ch1)
 	cover_address = scraper_ch1.get_story_image_address()
 
 	# Download cover image
 	print("Downloading cover ... ", end="")
-	with open("%s/Content/cover.jpg" % book_name, "wb") as cover_image:
+	with open("%s/Content/cover.jpg" % story_id, "wb") as cover_image:
 		# The CDN checks for Referer header
 		req = Request(cover_address, headers={"Referer": ("https://www.fanfiction.net/s/%s/" % story_id)})
 		cover_image.write(urlopen(req).read())
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 		for i in range(2, chapters+1):
 			scraper = Scraper(story_id, i)
 			chapter = scraper.parse()
-			with open("%s/Content/Chapters/ch%d.html" % (book_name, i), encoding="utf-8", mode="w") as file:
+			with open("%s/Content/Chapters/ch%d.html" % (story_id, i), encoding="utf-8", mode="w") as file:
 				file.write(chapter)
 
 	# Tidy HTML files
@@ -45,40 +45,40 @@ if __name__ == "__main__":
 
 	# Create mimetype file
 	print("Creating mimetype file")
-	extra_files.create_mimetype(book_name)
+	extra_files.create_mimetype(story_id)
 
 	# Create a simple stylesheet
 	print("Creating stylesheet")
-	extra_files.create_stylesheet(book_name)
+	extra_files.create_stylesheet(story_id)
 
 	# Create titlepage
 	print("Creating titlepage with the cover image")
-	extra_files.create_titlepage(book_name)
+	extra_files.create_titlepage(story_id)
 
 	# Build TOC
 	print("Creating table of contents")
-	extra_files.create_toc(book_name, scraper_ch1.get_title(), story_id, chapters)
+	extra_files.create_toc(story_id, scraper_ch1.get_title(), chapters)
 
 	# Create container.xml
 	print("Creating container.xml")
-	extra_files.create_container(book_name)
+	extra_files.create_container(story_id)
 
 	# Create contents list
 	print("Creating content.opf")
-	extra_files.create_content_list(book_name, scraper_ch1.get_title(), scraper_ch1.get_author(), story_id, chapters)
+	extra_files.create_content_list(story_id, scraper_ch1.get_title(), scraper_ch1.get_author(), chapters)
 
 	# Creating zip file
 	print("Compressing files")
 	with zipfile.ZipFile("%s.epub" % book_name, "w") as zip:
-		zip.write("%s/META-INF/container.xml" % book_name, "META-INF/container.xml")
-		zip.write("%s/mimetype" % book_name, "mimetype")
-		zip.write("%s/Content/styles.css" % book_name, "Content/styles.css")
-		zip.write("%s/Content/titlepage.html" % book_name, "Content/titlepage.html")
-		zip.write("%s/Content/cover.jpg" % book_name, "Content/cover.jpg")
-		zip.write("%s/Content/toc.ncx" % book_name, "Content/toc.ncx")
-		zip.write("%s/Content/content.opf" % book_name, "Content/content.opf")
+		zip.write("%s/META-INF/container.xml" % story_id, "META-INF/container.xml")
+		zip.write("%s/mimetype" % story_id, "mimetype")
+		zip.write("%s/Content/styles.css" % story_id, "Content/styles.css")
+		zip.write("%s/Content/titlepage.html" % story_id, "Content/titlepage.html")
+		zip.write("%s/Content/cover.jpg" % story_id, "Content/cover.jpg")
+		zip.write("%s/Content/toc.ncx" % story_id, "Content/toc.ncx")
+		zip.write("%s/Content/content.opf" % story_id, "Content/content.opf")
 		for i in range(1, chapters+1):
-			zip.write("%s/Content/Chapters/ch%d.html" % (book_name, i), "Content/Chapters/ch%d.html" % i)
+			zip.write("%s/Content/Chapters/ch%d.html" % (story_id, i), "Content/Chapters/ch%d.html" % i)
 	
 	# Remove temporary files
-	shutil.rmtree("%s/" % book_name)
+	shutil.rmtree("%s/" % story_id)
