@@ -1,32 +1,31 @@
-# extra_files.py
-# Copyright (c) Aleksi Blinnikka 8.3.2014
+#!/usr/bin/env python
+# 26.7.2014 Aleksi Blinnikka
 
 import time, sys
 
-# Not much can be done to comment this, these files are required to be created for a working ePub.
-# Each file is pretty much as simple as it can be while still having enough information.
-
-def create_mimetype(story_id):
-	with open("%s/mimetype" % story_id, encoding="utf-8", mode="w") as file:
-		file.write("application/epub+zip")
-
-def create_stylesheet(story_id):
-	with open("%s/Content/styles.css" % story_id, encoding="utf-8", mode="w") as stylesheet:
-		stylesheet.write(
-"""@page {
-	margin-bottom: 5pt;
-	margin-top: 5pt;
-}""")
-
-def create_titlepage(story_id):
-	with open("%s/Content/titlepage.html" % story_id, encoding="utf-8", mode="w") as titlepage:
-		titlepage.write(
-"""<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+MIMETYPE = "application/epub+zip"
+STYLES_CSS = "@page {margin-bottom: 5pt; margin-top: 5pt;}"
+TITLEPAGE_HTML = """\
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" \
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head><title>Cover</title></head>
 <body><img alt="" height="100%" src="cover.jpg" /></body>
-</html>""")
+</html>"""
+CONTAINER_XML = """\
+<?xml version="1.0"?>
+<container version="1.0" \
+xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles><rootfile full-path="Content/content.opf" \
+media-type="application/oebps-package+xml" /></rootfiles>
+</container>"""
+
+def toc(story_info):
+    pass
+
+def contents(story_info):
+    pass
 
 def create_toc(story_id, title, chapters):
 	with open("%s/Content/toc.ncx" % story_id, encoding="utf-8", mode="w") as toc:
@@ -50,14 +49,6 @@ def create_toc(story_id, title, chapters):
 		toc.write(
 """</navMap>
 </ncx>""")
-
-def create_container(story_id):
-	with open("%s/META-INF/container.xml" % story_id, encoding="utf-8", mode="w") as container:
-		container.write(
-"""<?xml version="1.0"?>
-<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-<rootfiles><rootfile full-path="Content/content.opf" media-type="application/oebps-package+xml" /></rootfiles>
-</container>""")
 
 def create_content_list(story_id, title, author, chapters):
 	with open("%s/Content/content.opf" % story_id, encoding="utf-8", mode="w") as contents:
