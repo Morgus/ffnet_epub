@@ -7,6 +7,8 @@ from urllib.request import urlopen, Request
 from extra_files import *
 
 PARSERS = { "fanfiction.net": "ff_net" }
+# Invalid filenames on Windows
+INVALID_CHARS = re.compile("[/\\:*?\"<>|]")
 
 dl_semaphore = None
 
@@ -18,7 +20,7 @@ def get_chapter(url, chapter_no, parse):
 def get_chapter1(url, parse):
     """Create the first chapter's HTML file and get story information"""
     raw_html = urlopen(url).read()
-    return parse(raw_html)
+    return parse(raw_html, url)
 
 def get_parser(url):
     for key in PARSERS.keys():
@@ -67,7 +69,9 @@ def main(main_url, max_connections=2):
                 chapters[ch_no] = html
 
     with zipfile.ZipFile(
-            "{} - {}.epub".format(story_info["author"], story_info["title"]),
+            "{} - {}.epub".format(
+                INVALID_CHARS.sub(story_info["author"], "-"),
+                INVALID_CHARS.sub(story_info["title"], "-")),
             "w") as f:
         f.writestr("mimetype", MIMETYPE)
         f.writestr("META-INF/container.xml", CONTAINER_XML)
