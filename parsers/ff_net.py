@@ -22,6 +22,16 @@ def parse(raw_html, chapter_no):
 
     story_text = soup.find("div", id="storytext").extract()
     story_text.attrs = None
+    chapters = soup.find("select", id="chap_select")
+    chapter = chapters.find("option", value=str(chapter_no)).string
+
+    soup.body.clear()
+    soup.body.attrs = None
+    chapter_tag = soup.new_tag("h2")
+    chapter_tag.string = chapter
+    soup.body.append(chapter_tag)
+    soup.body.append(story_text)
+
     return str(soup), chapter_no
 
 def parse_ch1(raw_html, url):
@@ -54,7 +64,7 @@ def parse_ch1(raw_html, url):
     # If there is no Chapters: text in the info section, there is only one
     chapter_num = 1
     if "Chapters:" in profile.get_text():
-        chapter_num = re.search(RE_CHAPTERS, profile.get_text()).group(1)
+        chapter_num = int(re.search(RE_CHAPTERS, profile.get_text()).group(1))
     story_info["ch_urls"] = {}
     for ch in range(2, chapter_num+1):
         story_info["ch_urls"][ch] = BASE_URL.format(story_info["id"], ch)
@@ -63,7 +73,7 @@ def parse_ch1(raw_html, url):
     tags_span = profile.find("span", class_="xgray")
     tags = ""
     for string in tags_span.stripped_strings:
-        tags = " ".join(tags, string)
+        tags = " ".join([tags, string])
 
     # Story
     story_text = soup.find("div", id="storytext").extract()
