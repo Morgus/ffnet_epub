@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # 26.7.2014 Aleksi Blinnikka
 
-import concurrent.futures, zipfile, importlib
+import concurrent.futures, zipfile, importlib, re
 from threading import BoundedSemaphore
 from urllib.request import urlopen, Request
 from extra_files import *
@@ -49,29 +49,27 @@ def main(main_url, max_connections=2):
     html_ch1, chapter_num, story_info = get_chapter1(main_url, parse_ch1)
     chapters = {}
     chapters[1] = html_ch1
-    #TODO Have default fallback cover
-    cover_image_req = \
-        Request(story_info["cover_url"], headers=story_info["cover_headers"])
-    story_info["cover_image"] = bytes(urlopen(cover_image_req).read())
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    if story_info["cover_url"]:
+        cover_image_req = \
+          Request(story_info["cover_url"], headers=story_info["cover_headers"])
+        story_info["cover_image"] = urlopen(cover_image_req).read()
+    else:
+        story_info["cover_image"] = open("default.jpg", "rb").read()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         chs_to_parse = []
-        for ch in range(chapter_num-1):
-            with dl_semaphore:
-                chs_to_parse.append(executor.submit(get_chapter,
+        for ch in range(2, chapter_num+1):
+            dl_semaphore.acquire()
+            chs_to_parse.append(executor.submit(get_chapter,
                                         story_info["ch_urls"][ch], ch, parse))
 
         for future in concurrent.futures.as_completed(chs_to_parse):
-            try:
-                html, ch_no = future.result()
-            except Exception as e:
-                pass
-            else:
-                chapters[ch_no] = html
+            html, ch_no = future.result()
+            chapters[ch_no] = html
 
     with zipfile.ZipFile(
             "{} - {}.epub".format(
-                INVALID_CHARS.sub(story_info["author"], "-"),
-                INVALID_CHARS.sub(story_info["title"], "-")),
+                INVALID_CHARS.sub("-", story_info["author"]),
+                INVALID_CHARS.sub("-", story_info["title"])),
             "w") as f:
         f.writestr("mimetype", MIMETYPE)
         f.writestr("META-INF/container.xml", CONTAINER_XML)
