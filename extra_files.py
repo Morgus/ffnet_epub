@@ -22,10 +22,10 @@ media-type="application/oebps-package+xml" /></rootfiles>
 </container>"""
 
 def toc(story_info):
-    pass
+    return "testTOC"
 
 def contents(story_info):
-    pass
+    return "testContents"
 
 def create_toc(story_id, title, chapters):
 	with open("%s/Content/toc.ncx" % story_id, encoding="utf-8", mode="w") as toc:
