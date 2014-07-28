@@ -46,22 +46,24 @@ def main(main_url, max_connections=2):
     global dl_semaphore
     dl_semaphore = BoundedSemaphore(max_connections)
     parse, parse_ch1 = get_parser(main_url)
+
     html_ch1, chapter_num, story_info = get_chapter1(main_url, parse_ch1)
     chapters = {}
     chapters[1] = html_ch1
+
     if story_info["cover_url"]:
         cover_image_req = \
           Request(story_info["cover_url"], headers=story_info["cover_headers"])
         story_info["cover_image"] = urlopen(cover_image_req).read()
     else:
         story_info["cover_image"] = open("default.jpg", "rb").read()
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         chs_to_parse = []
         for ch in range(2, chapter_num+1):
             dl_semaphore.acquire()
             chs_to_parse.append(executor.submit(get_chapter,
                                         story_info["ch_urls"][ch], ch, parse))
-
         for future in concurrent.futures.as_completed(chs_to_parse):
             html, ch_no = future.result()
             chapters[ch_no] = html
@@ -76,8 +78,8 @@ def main(main_url, max_connections=2):
         f.writestr("Content/titlepage.html", TITLEPAGE_HTML)
         f.writestr("Content/styles.css", STYLES_CSS)
         f.writestr("Content/cover.jpg", story_info["cover_image"])
-        f.writestr("Content/toc.ncx", toc(story_info))
-        f.writestr("Content/content.opf", contents(story_info))
+        f.writestr("Content/toc.ncx", toc(story_info, chapter_num))
+        f.writestr("Content/content.opf", contents(story_info, chapter_num))
         for ch in range(1, chapter_num+1):
             f.writestr("Content/Chapters/ch{}.html".format(ch), chapters[ch])
 

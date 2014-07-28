@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # 26.7.2014 Aleksi Blinnikka
 
-import time, sys
+from datetime import datetime
 
 MIMETYPE = "application/epub+zip"
 STYLES_CSS = "@page {margin-bottom: 5pt; margin-top: 5pt;}"
@@ -21,74 +21,67 @@ xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
 media-type="application/oebps-package+xml" /></rootfiles>
 </container>"""
 
-def toc(story_info):
-    return "testTOC"
+def toc(story_info, chapters):
+    navpoints_list = ["""\
+<navPoint id="a{0}" playOrder="{1}">
+<navLabel><text>Chapter {0}</text></navLabel>
+<content src="Chapters/ch{0}.html" />
+</navPoint>""".format(i, i-1)
+for i in range(1, chapters+1)]
 
-def contents(story_info):
-    return "testContents"
-
-def create_toc(story_id, title, chapters):
-	with open("%s/Content/toc.ncx" % story_id, encoding="utf-8", mode="w") as toc:
-		toc.write(
-"""<?xml version='1.0' encoding='utf-8'?>
-<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="eng">
-<head>
-<meta content="aleksi-blinnikka-python-epub-%s" name="dtb:uid"/>
+    navpoints = "".join(navpoints_list)
+    toc_string = "".join(["""\
+<?xml version='1.0' encoding='utf-8'?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" \
+xml:lang="eng">
+<head><meta content="aleksi-blinnikka-python-epub-{}" name="dtb:uid"/>
 <meta content="1" name="dtb:depth"/>
 <meta content="0" name="dtb:totalPageCount"/>
-<meta content="0" name="dtb:maxPageNumber"/>
-</head>
-<docTitle><text>%s</text></docTitle>
-<navMap>""" % (story_id, title))
-		for i in range(1, chapters+1):
-			toc.write(
-"""<navPoint id="a%d" playOrder="%d">
-<navLabel><text>Chapter %d</text></navLabel>
-<content src="Chapters/ch%d.html" />
-</navPoint>""" % (i, i-1, i, i))
-		toc.write(
-"""</navMap>
-</ncx>""")
+<meta content="0" name="dtb:maxPageNumber"/></head>
+<docTitle><text>{}</text></docTitle><navMap>
+""".format(story_info["id"], story_info["title"]),
+navpoints, "</navMap></ncx>"])
+    return toc_string
 
-def create_content_list(story_id, title, author, chapters):
-	with open("%s/Content/content.opf" % story_id, encoding="utf-8", mode="w") as contents:
-		contents.write(
-"""<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid-id" version="2.0">
-<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
-<dc:identifier id="uuid-id">aleksi-blinnikka-python-epub-%s</dc:identifier>
-<dc:creator opf:file-as="%s" opf:role="aut">%s</dc:creator>""" % (story_id, author, author))
-		time_struct = time.gmtime()
-		# Format the current time correctly
-		current_time = "%d-%02d-%02dT%02d:%02d:%02d+00:00" % (
-		time_struct[0], time_struct[1], time_struct[2], time_struct[3], time_struct[4], time_struct[5]
-		)
-		contents.write(
-"""<dc:title>%s</dc:title>
-<dc:date>%s</dc:date>
-<meta name="cover" content="cover.jpg" />
-<dc:language>en</dc:language>
-<dc:contributor opf:role="bkp"></dc:contributor>
-</metadata>
-<manifest>
+def contents(story_info, chapters):
+    t = datetime.utcnow()
+    t = t.replace(microsecond=0)
+    timestamp = "+".join([t.isoformat(), "00:00"])
+    contents = ["""\
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid-id" \
+version="2.0">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" \
+xmlns:opf="http://www.idpf.org/2007/opf">
+<dc:identifier id="uuid-id">aleksi-blinnikka-python-epub-{0}</dc:identifier>
+<dc:creator opf:file-as="{1}" opf:role="aut">{1}</dc:creator>
+<dc:title>{2}</dc:title><dc:date>{3}</dc:date>
+<meta name="cover" content="cover.jpg" /><dc:language>en</dc:language>
+<dc:contributor opf:role="bkp"></dc:contributor></metadata><manifest>
 <item href="cover.jpg" id="cover" media-type="image/jpeg" />
 <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml" />
 <item href="styles.css" id="styles" media-type="text/css" />
-<item href="titlepage.html" id="titlepage" media-type="application/xhtml+xml" />""" % (title, current_time))
-		for i in range(1, chapters+1):
-			contents.write("""<item href="Chapters/ch%d.html" id="ch%d" media-type="application/xhtml+xml" />""" % (i, i))
+<item href="titlepage.html" id="titlepage" \
+media-type="application/xhtml+xml" />
+""".format(story_info["id"], story_info["author"],
+           story_info["title"], timestamp)]
 
-		contents.write(
-"""</manifest>
-<spine toc="ncx">
-<itemref idref="titlepage" />""")
-		for i in range(1, chapters+1):
-			contents.write("""<itemref idref="ch%d" />""" % i)
+    items_list = ["""\
+<item href="Chapters/ch{0}.html" id="ch{0}" \
+media-type="application/xhtml+xml" />
+""".format(i) for i in range(1, chapters+1)]
+    items = "".join(items_list)
+    contents.append(items)
+    contents.append(
+            "</manifest><spine toc=\"ncx\"><itemref idref=\"titlepage\" />")
 
-		contents.write(
-"""</spine>
+    itemref_list = ["<itemref idref=\"ch{}\" />".format(i)
+                    for i in range(1, chapters+1)]
+    itemrefs = "".join(itemref_list)
+    contents.append(itemrefs)
+    contents.append("""\
+</spine>
 <guide><reference href="titlepage.html" type="cover" title="Cover"/></guide>
 </package>""")
+    return "".join(contents)
 
-if __name__ == "__main__":
-	sys.exit("Run from ffnet_epub_creator.py")

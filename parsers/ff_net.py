@@ -8,6 +8,10 @@ BASE_URL = "http://www.fanfiction.net/s/{}/{}/"
 RE_ID = "/s/([0-9]+)"
 RE_CHAPTERS = "Chapters: ([0-9]+)"
 
+XHTML_TRANSITIONAL = """\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">"""
+
 def parse(raw_html, chapter_no):
     soup = BeautifulSoup(raw_html)
 
@@ -32,7 +36,9 @@ def parse(raw_html, chapter_no):
     soup.body.append(chapter_tag)
     soup.body.append(story_text)
 
-    return str(soup), chapter_no
+    html = str(soup)
+    html = html.replace("<!DOCTYPE html>", XHTML_TRANSITIONAL)
+    return html, chapter_no
 
 def parse_ch1(raw_html, url):
     story_info = {}
@@ -95,5 +101,7 @@ def parse_ch1(raw_html, url):
     soup.body.append(story_tags)
     soup.body.append(story_text)
 
-    return str(soup), chapter_num, story_info
+    html = str(soup)
+    html = html.replace("<!DOCTYPE html>", XHTML_TRANSITIONAL, 1)
+    return html, chapter_num, story_info
 
