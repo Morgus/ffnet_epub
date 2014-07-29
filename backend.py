@@ -31,7 +31,7 @@ def get_chapter1(url, parse):
     """Create the first chapter's HTML file and get story information"""
     raw_html = urlopen(url).read()
     html, chapters, story_info = parse(raw_html, url)
-    get_queue().put("Chapter 1 parsed")
+    get_queue().put("Chapter 1 parsed, {} chapters in total".format(chapters))
     return html, chapters, story_info
 
 def get_parser(url):

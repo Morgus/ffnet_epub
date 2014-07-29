@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse, threading, sys, queue
+from urllib.parse import urlparse
 import backend
 
 def main():
@@ -11,7 +12,7 @@ def main():
         help="maximum number of simultaneous connections (default 2)")
     parser.add_argument("-f", "--file",
      help="filename for the resulting Epub\n(default <author> - <title>.epub)")
-    parser.add_argument("URL", help="URL of the first chapter")
+    parser.add_argument("URL", type=parse_url, help="URL of the first chapter")
     parser.add_argument("--version", action="version",
             version="%(prog)s 1.0\n2014 Aleksi Blinnikka")
     args = parser.parse_args()
@@ -32,6 +33,13 @@ def main():
         if not creator_thread.is_alive():
             break
     print("Done!")
+
+def parse_url(url):
+    result = urlparse(url)
+    if not result.netloc or not result.path:
+        msg = "{} not a valid URL (maybe missing http(s)://?)".format(url)
+        raise argparse.ArgumentTypeError(msg)
+    return url
 
 if __name__ == "__main__":
     main()
