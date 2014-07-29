@@ -35,14 +35,16 @@ class NoParser(Exception):
     def __str__(self):
         return "No parser found for {}".format(repr(self.url))
 
-def main(main_url, max_connections=2):
+def create_document(main_url, max_connections, filename):
     """Creates an EPUB document from a fanfic.
        
        main_url -- user given URL which should be the first chapter
        max_connections -- maximum number of simultaneous connections
            default: 2. This should be chosen with care as the Terms of Service
            of some of the websites states that you shouldn't cause more stress
-           than a normal visitor"""
+           than a normal visitor
+        filename -- optional filename for the resulting Epub document
+            By default filename is: <author> - <title>.epub"""
     global dl_semaphore
     dl_semaphore = BoundedSemaphore(max_connections)
     parse, parse_ch1 = get_parser(main_url)
@@ -68,11 +70,11 @@ def main(main_url, max_connections=2):
             html, ch_no = future.result()
             chapters[ch_no] = html
 
-    with zipfile.ZipFile(
-            "{} - {}.epub".format(
+    if not filename:
+        filename = "{} - {}.epub".format(
                 INVALID_CHARS.sub("-", story_info["author"]),
-                INVALID_CHARS.sub("-", story_info["title"])),
-            "w") as f:
+                INVALID_CHARS.sub("-", story_info["title"]))
+    with zipfile.ZipFile(filename, "w") as f:
         f.writestr("mimetype", MIMETYPE)
         f.writestr("META-INF/container.xml", CONTAINER_XML)
         f.writestr("Content/titlepage.html", TITLEPAGE_HTML)

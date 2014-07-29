@@ -37,7 +37,7 @@ def parse(raw_html, chapter_no):
     soup.body.append(story_text)
 
     html = str(soup)
-    html = html.replace("<!DOCTYPE html>", XHTML_TRANSITIONAL)
+    html = html.replace("<!DOCTYPE html>", XHTML_TRANSITIONAL, 1)
     return html, chapter_no
 
 def parse_ch1(raw_html, url):
