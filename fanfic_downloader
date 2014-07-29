@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse, threading, sys
+import argparse, threading, sys, queue
 import backend
 
 def main():
@@ -17,16 +17,21 @@ def main():
     args = parser.parse_args()
 
     print("Downloading story from {}".format(args.URL))
+    progress_queue = backend.get_queue()
     creator_thread = threading.Thread(target=backend.create_document,
             args=(args.URL, args.connections, args.file))
     creator_thread.start()
     while True:
-        print(".", end="")
-        sys.stdout.flush()
-        creator_thread.join(timeout=3)
+        try:
+            progress = progress_queue.get(timeout=1)
+        except queue.Empty:
+            pass
+        else:
+            print(progress)
+            progress_queue.task_done()
         if not creator_thread.is_alive():
             break
-    print("\nDownloaded!")
+    print("Done!")
 
 if __name__ == "__main__":
     main()

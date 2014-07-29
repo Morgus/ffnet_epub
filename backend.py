@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # 26.7.2014 Aleksi Blinnikka
 
-import concurrent.futures, zipfile, importlib, re
+import concurrent.futures, zipfile, importlib, re, queue
 from threading import BoundedSemaphore
 from urllib.request import urlopen, Request
 from extra_files import *
@@ -12,15 +12,27 @@ INVALID_CHARS = re.compile("[/\\:*?\"<>|]")
 
 dl_semaphore = None
 
+_queue = None
+
+def get_queue():
+    global _queue
+    if not _queue:
+        _queue = queue.Queue()
+    return _queue
+
 def get_chapter(url, chapter_no, parse):
     raw_html = urlopen(url).read()
     dl_semaphore.release()
-    return parse(raw_html, chapter_no)
+    html, chapter = parse(raw_html, chapter_no)
+    get_queue().put("Chapter {} parsed".format(chapter))
+    return html, chapter
 
 def get_chapter1(url, parse):
     """Create the first chapter's HTML file and get story information"""
     raw_html = urlopen(url).read()
-    return parse(raw_html, url)
+    html, chapters, story_info = parse(raw_html, url)
+    get_queue().put("Chapter 1 parsed")
+    return html, chapters, story_info
 
 def get_parser(url):
     for key in PARSERS.keys():
