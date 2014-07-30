@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 26.7.2014 Aleksi Blinnikka
+# 2014 Aleksi Blinnikka
 
 from datetime import datetime
 

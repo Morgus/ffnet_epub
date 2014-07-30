@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# 2014 Aleksi Blinnikka
 
 import argparse, threading, sys, queue
 from urllib.parse import urlparse

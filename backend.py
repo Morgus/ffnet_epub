@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 26.7.2014 Aleksi Blinnikka
+# 2014 Aleksi Blinnikka
 
 import concurrent.futures, zipfile, importlib, re, queue
 from threading import BoundedSemaphore
@@ -55,8 +55,8 @@ def create_document(main_url, max_connections, filename):
            default: 2. This should be chosen with care as the Terms of Service
            of some of the websites states that you shouldn't cause more stress
            than a normal visitor
-        filename -- optional filename for the resulting Epub document
-            By default filename is: <author> - <title>.epub"""
+       filename -- optional filename for the resulting Epub document
+           By default filename is: <author> - <title>.epub"""
     global dl_semaphore
     dl_semaphore = BoundedSemaphore(max_connections)
     parse, parse_ch1 = get_parser(main_url)
