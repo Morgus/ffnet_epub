@@ -83,7 +83,9 @@ class App(ttk.Frame):
         progress_queue = backend.progress_queue
         ch_done = 0
         chapters = 0
+        stopped = False
         self.progressbar["mode"] = "indeterminate"
+        self.progressbar.start()
         while True:
             try:
                 progress = progress_queue.get(timeout=1)
@@ -96,11 +98,15 @@ class App(ttk.Frame):
                 self.status.config(
                         text="{}/{} chapters done".format(ch_done, chapters),
                         foreground="black")
+                if not stopped:
+                    self.progressbar.stop()
+                    stopped = True
                 self.progressbar["mode"] = "determinate"
                 self.progress.set(floor(ch_done*(100/chapters)))
                 progress_queue.task_done()
             if not self.creator_thread.is_alive():
                 break
+        self.progress.set(0)
 
     def validate_url(self):
         url = self.url.get()
@@ -115,6 +121,6 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     app.master.title("Fanfic downloader")
-    app.master.minsize(width=500, height=100)
+    app.master.minsize(width=500, height=110)
     app.mainloop()
 
