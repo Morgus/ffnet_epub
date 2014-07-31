@@ -12,26 +12,20 @@ INVALID_CHARS = re.compile("[/\\:*?\"<>|]")
 
 dl_semaphore = None
 
-_queue = None
-
-def get_queue():
-    global _queue
-    if not _queue:
-        _queue = queue.Queue()
-    return _queue
+progress_queue = queue.Queue()
 
 def get_chapter(url, chapter_no, parse):
     raw_html = urlopen(url).read()
     dl_semaphore.release()
     html, chapter = parse(raw_html, chapter_no)
-    get_queue().put("Chapter {} parsed".format(chapter))
+    progress_queue.put((chapter, None))
     return html, chapter
 
 def get_chapter1(url, parse):
     """Create the first chapter's HTML file and get story information"""
     raw_html = urlopen(url).read()
     html, chapters, story_info = parse(raw_html, url)
-    get_queue().put("Chapter 1 parsed, {} chapters in total".format(chapters))
+    progress_queue.put((1, chapters))
     return html, chapters, story_info
 
 def get_parser(url):
@@ -47,7 +41,7 @@ class NoParser(Exception):
     def __str__(self):
         return "No parser found for {}".format(repr(self.url))
 
-def create_document(main_url, max_connections, filename):
+def create_document(main_url, max_connections=2, filename=None):
     """Creates an EPUB document from a fanfic.
        
        main_url -- user given URL which should be the first chapter

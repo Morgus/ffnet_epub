@@ -15,21 +15,26 @@ def main():
      help="filename for the resulting Epub\n(default <author> - <title>.epub)")
     parser.add_argument("URL", type=parse_url, help="URL of the first chapter")
     parser.add_argument("--version", action="version",
-            version="%(prog)s 1.0\n2014 Aleksi Blinnikka")
+            version="Fanfic downloader 1.0\n2014 Aleksi Blinnikka")
     args = parser.parse_args()
 
     print("Downloading story from {}".format(args.URL))
-    progress_queue = backend.get_queue()
+    progress_queue = backend.progress_queue
     creator_thread = threading.Thread(target=backend.create_document,
             args=(args.URL, args.connections, args.file))
     creator_thread.start()
+    ch_done = 0
+    chapters = 0
     while True:
         try:
             progress = progress_queue.get(timeout=1)
         except queue.Empty:
             pass
         else:
-            print(progress)
+            ch_done += 1
+            if progress[1]:
+                chapters = progress[1]
+            print("{}/{} chapters done".format(ch_done, chapters))
             progress_queue.task_done()
         if not creator_thread.is_alive():
             break
