@@ -1,0 +1,120 @@
+#!/usr/bin/env python
+# 2014 Aleksi Blinnikka
+
+import tkinter as tk
+import tkinter.ttk as ttk
+import threading, queue
+from urllib.parse import urlparse
+from math import floor
+import backend
+
+class App(ttk.Frame):
+    def __init__(self, master):
+        ttk.Frame.__init__(self, master)
+        self.pack(fill=tk.BOTH, expand=1)
+        frame = ttk.Frame(self)
+        frame.pack(fill=tk.X, expand=1, anchor=tk.N, padx=5, pady=5)
+
+        self.url = tk.StringVar()
+        self.filename = tk.StringVar()
+        self.progress = tk.IntVar()
+        self.style = ttk.Style()
+        self.style.theme_use("default")
+        self.createWidgets(frame)
+
+    def createWidgets(self, frame):
+        # Row 0
+        container = ttk.Frame(frame)
+        container.pack(fill=tk.X, expand=1)
+        label = ttk.Label(container, text="URL:")
+        label.pack(side=tk.LEFT)
+        self.entry = ttk.Entry(container, validate="focusout",
+                validatecommand=self.validate_url, textvariable=self.url)
+        self.entry.bind("<Key-Return>", self.download_binding)
+        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=1, padx=5)
+        self.dl_button = ttk.Button(container, text="Download",
+                command=self.download_button, width=15)
+        self.dl_button.pack(side=tk.LEFT)
+        # Row 1
+        container = ttk.Frame(frame)
+        container.pack(fill=tk.X, expand=1)
+        label = ttk.Label(container, text="Filename (optional):")
+        label.pack(side=tk.LEFT)
+        self.filename_entry = ttk.Entry(container, textvariable=self.filename)
+        self.filename_entry.bind("<Key-Return>", self.download_binding)
+        self.filename_entry.pack(side=tk.LEFT, fill=tk.X, expand=1,
+                padx=5, pady=4)
+        # Row 2
+        self.status = ttk.Label(frame, text="0 chapters done",
+                foreground="grey")
+        self.status.pack()
+        # Row 3
+        self.progressbar = ttk.Progressbar(frame, variable=self.progress)
+        self.progressbar.pack(fill=tk.X, expand=1, padx=5, pady=5)
+
+    def download_binding(self, event):
+        self._download()
+
+    def download_button(self):
+        self._download()
+
+    def _download(self):
+        if not self.validate_url():
+            return
+        url = self.url.get()
+        filename = self.filename.get()
+        if filename:
+            self.creator_thread = threading.Thread(
+                    target=self._create_document, args=(url, filename))
+        else:
+            self.creator_thread = threading.Thread(
+                    target=self._create_document, args=(url, None))
+        self.progress_thread = threading.Thread(target=self._check_progress)
+        self.creator_thread.start()
+        self.progress_thread.start()
+
+    def _create_document(self, url, filename=None):
+        try:
+            backend.create_document(url, filename=filename)
+        except backend.NoParser as e:
+            self.status.config(text=str(e), foreground="red")
+
+    def _check_progress(self):
+        progress_queue = backend.progress_queue
+        ch_done = 0
+        chapters = 0
+        self.progressbar["mode"] = "indeterminate"
+        while True:
+            try:
+                progress = progress_queue.get(timeout=1)
+            except queue.Empty:
+                pass
+            else:
+                ch_done += 1
+                if progress[1]:
+                    chapters = progress[1]
+                self.status.config(
+                        text="{}/{} chapters done".format(ch_done, chapters),
+                        foreground="black")
+                self.progressbar["mode"] = "determinate"
+                self.progress.set(floor(ch_done*(100/chapters)))
+                progress_queue.task_done()
+            if not self.creator_thread.is_alive():
+                break
+
+    def validate_url(self):
+        url = self.url.get()
+        result = urlparse(url)
+        if not result.netloc or not result.path:
+            self.status.config(text="Invalid URL", foreground="red")
+            return False
+        self.status.config(text="0 chapters done", foreground="grey")
+        return True
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    app.master.title("Fanfic downloader")
+    app.master.minsize(width=500, height=100)
+    app.mainloop()
+
