@@ -3,6 +3,7 @@
 
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter.filedialog import asksaveasfilename
 import threading, queue
 from urllib.parse import urlparse
 from math import floor
@@ -16,7 +17,7 @@ class App(ttk.Frame):
         frame.pack(fill=tk.X, expand=1, anchor=tk.N, padx=5, pady=5)
 
         self.url = tk.StringVar()
-        self.filename = tk.StringVar()
+        self.path = tk.StringVar()
         self.progress = tk.IntVar()
         self.style = ttk.Style()
         self.style.theme_use("default")
@@ -37,13 +38,16 @@ class App(ttk.Frame):
         self.dl_button.pack(side=tk.LEFT)
         # Row 1
         container = ttk.Frame(frame)
-        container.pack(fill=tk.X, expand=1)
-        label = ttk.Label(container, text="Filename (optional):")
+        container.pack(fill=tk.X, expand=1, pady=2)
+        label = ttk.Label(container, text="Path (optional):")
         label.pack(side=tk.LEFT)
-        self.filename_entry = ttk.Entry(container, textvariable=self.filename)
-        self.filename_entry.bind("<Key-Return>", self.download_binding)
-        self.filename_entry.pack(side=tk.LEFT, fill=tk.X, expand=1,
-                padx=5, pady=4)
+        self.path_entry = ttk.Entry(container, textvariable=self.path)
+        self.path_entry.bind("<Key-Return>", self.download_binding)
+        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=1,
+                padx=5)
+        self.file_button = ttk.Button(container, text="...",
+                command=self.file_dialog, width=3)
+        self.file_button.pack(side=tk.LEFT)
         # Row 2
         self.status = ttk.Label(frame, text="0 chapters done",
                 foreground="grey")
@@ -62,20 +66,23 @@ class App(ttk.Frame):
         if not self.validate_url():
             return
         url = self.url.get()
-        filename = self.filename.get()
-        if filename:
+        path = self.path.get()
+        if path:
             self.creator_thread = threading.Thread(
-                    target=self._create_document, args=(url, filename))
+                    target=self._create_document,
+                    args=(url, path), daemon=True)
         else:
             self.creator_thread = threading.Thread(
-                    target=self._create_document, args=(url, None))
-        self.progress_thread = threading.Thread(target=self._check_progress)
+                    target=self._create_document,
+                    args=(url, None), daemon=True)
+        self.progress_thread = threading.Thread(
+                target=self._check_progress, daemon=True)
         self.creator_thread.start()
         self.progress_thread.start()
 
-    def _create_document(self, url, filename=None):
+    def _create_document(self, url, path=None):
         try:
-            backend.create_document(url, filename=filename)
+            backend.create_document(url, filepath=path)
         except backend.NoParser as e:
             self.status.config(text=str(e), foreground="red")
 
@@ -107,12 +114,20 @@ class App(ttk.Frame):
             if not self.creator_thread.is_alive():
                 break
         self.progress.set(0)
+        self.status.config(text="Done!", foreground="black")
+
+    def file_dialog(self):
+        fname = asksaveasfilename(defaultextension=".epub",
+                initialfile="%author - %title.epub", parent=self.master)
+        if fname:
+            self.path.set(fname)
 
     def validate_url(self):
         url = self.url.get()
         result = urlparse(url)
         if not result.netloc or not result.path:
-            self.status.config(text="Invalid URL", foreground="red")
+            self.status.config(text="Invalid URL, (maybe missing http(s)://?)",
+                    foreground="red")
             return False
         self.status.config(text="0 chapters done", foreground="grey")
         return True

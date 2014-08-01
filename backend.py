@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # 2014 Aleksi Blinnikka
 
-import concurrent.futures, zipfile, importlib, re, queue
+import concurrent.futures, zipfile, importlib, re, queue, os.path
 from threading import BoundedSemaphore
 from urllib.request import urlopen, Request
 from extra_files import *
@@ -41,16 +41,17 @@ class NoParser(Exception):
     def __str__(self):
         return "No parser found for {}".format(repr(self.url))
 
-def create_document(main_url, max_connections=2, filename=None):
+def create_document(main_url, max_connections=2, filepath=None):
     """Creates an EPUB document from a fanfic.
        
        main_url -- user given URL which should be the first chapter
        max_connections -- maximum number of simultaneous connections
            default: 2. This should be chosen with care as the Terms of Service
            of some of the websites states that you shouldn't cause more stress
-           than a normal visitor
-       filename -- optional filename for the resulting Epub document
-           By default filename is: <author> - <title>.epub"""
+           than a normal visitor.
+       filepath -- optional path for the resulting Epub document
+           By default filename is: <author> - <title>.epub in the current
+           directory."""
     global dl_semaphore
     dl_semaphore = BoundedSemaphore(max_connections)
     parse, parse_ch1 = get_parser(main_url)
@@ -76,11 +77,20 @@ def create_document(main_url, max_connections=2, filename=None):
             html, ch_no = future.result()
             chapters[ch_no] = html
 
-    if not filename:
-        filename = "{} - {}.epub".format(
+    if not filepath:
+        filepath = "{} - {}.epub".format(
                 INVALID_CHARS.sub("-", story_info["author"]),
                 INVALID_CHARS.sub("-", story_info["title"]))
-    with zipfile.ZipFile(filename, "w") as f:
+    elif os.path.isdir(filepath):
+        filepath = os.path.join(filepath, "{} - {}.epub".format(
+                INVALID_CHARS.sub("-", story_info["author"]),
+                INVALID_CHARS.sub("-", story_info["title"])))
+    else:
+        filepath = filepath.replace("%author",
+                INVALID_CHARS.sub("-", story_info["author"]))
+        filepath = filepath.replace("%title",
+                INVALID_CHARS.sub("-", story_info["title"]))
+    with zipfile.ZipFile(filepath, "w") as f:
         f.writestr("mimetype", MIMETYPE)
         f.writestr("META-INF/container.xml", CONTAINER_XML)
         f.writestr("Content/titlepage.html", TITLEPAGE_HTML)
