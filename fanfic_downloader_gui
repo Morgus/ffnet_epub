@@ -4,7 +4,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter.filedialog import asksaveasfilename
-import threading, queue
+import threading, queue, os
 from urllib.parse import urlparse
 from math import floor
 import backend
@@ -20,7 +20,10 @@ class App(ttk.Frame):
         self.path = tk.StringVar()
         self.progress = tk.IntVar()
         self.style = ttk.Style()
-        self.style.theme_use("default")
+        if os.name == "nt":
+            self.style.theme_use("vista")
+        else:
+            self.style.theme_use("default")
         self.createWidgets(frame)
 
     def createWidgets(self, frame):
@@ -136,6 +139,6 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     app.master.title("Fanfic downloader")
-    app.master.minsize(width=500, height=110)
+    app.master.minsize(width=500, height=115)
     app.mainloop()
 
