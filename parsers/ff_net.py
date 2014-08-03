@@ -71,9 +71,9 @@ def parse_ch1(raw_html, url):
     chapter_num = 1
     if "Chapters:" in profile.get_text():
         chapter_num = int(re.search(RE_CHAPTERS, profile.get_text()).group(1))
-    story_info["ch_urls"] = {}
+    story_info["chapter_urls"] = {}
     for ch in range(2, chapter_num+1):
-        story_info["ch_urls"][ch] = BASE_URL.format(story_info["id"], ch)
+        story_info["chapter_urls"][ch] = BASE_URL.format(story_info["id"], ch)
 
     description = profile.find("div", class_="xcontrast_txt").string
     tags_span = profile.find("span", class_="xgray")

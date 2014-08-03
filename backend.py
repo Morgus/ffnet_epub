@@ -80,7 +80,7 @@ def create_document(main_url, max_connections=2, filepath=None):
             dl_semaphore.acquire()
             parse_chapters.append(executor.submit(get_chapter,
                                         download_urls[ch], ch, parse))
-        for future in concurrent.futures.as_completed(chs_to_parse):
+        for future in concurrent.futures.as_completed(parse_chapters):
             html, chapter_no = future.result()
             chapters[chapter_no] = html
 

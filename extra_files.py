@@ -27,7 +27,7 @@ def toc(story_info, chapters):
 <navLabel><text>Chapter {0}</text></navLabel>
 <content src="Chapters/ch{0}.html" />
 </navPoint>""".format(i, i-1)
-for i in range(1, chapters+1)]
+        for i in range(1, chapters+1)]
 
     navpoints = "".join(navpoints_list)
     toc_string = "".join(["""\
@@ -40,7 +40,7 @@ xml:lang="eng">
 <meta content="0" name="dtb:maxPageNumber"/></head>
 <docTitle><text>{}</text></docTitle><navMap>
 """.format(story_info["id"], story_info["title"]),
-navpoints, "</navMap></ncx>"])
+           navpoints, "</navMap></ncx>"])
     return toc_string
 
 def contents(story_info, chapters):
