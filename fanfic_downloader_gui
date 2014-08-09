@@ -76,18 +76,12 @@ class App(ttk.Frame):
                     args=(url, path), daemon=True)
         else:
             self.creator_thread = threading.Thread(
-                    target=self._create_document,
-                    args=(url, None), daemon=True)
+                    target=backend.create_document,
+                    args=(url, 2, None), daemon=True)
         self.progress_thread = threading.Thread(
                 target=self._check_progress, daemon=True)
         self.creator_thread.start()
         self.progress_thread.start()
-
-    def _create_document(self, url, path=None):
-        try:
-            backend.create_document(url, filepath=path)
-        except backend.NoParser as e:
-            self.status.config(text=str(e), foreground="red")
 
     def _check_progress(self):
         progress_queue = backend.progress_queue
@@ -103,6 +97,9 @@ class App(ttk.Frame):
                 pass
             else:
                 ch_done += 1
+                if not progress[0]:
+                    self.status.config(text=progress[1], foreground="red")
+                    break
                 if progress[1]:
                     chapters = progress[1]
                 self.status.config(
@@ -116,8 +113,13 @@ class App(ttk.Frame):
                 progress_queue.task_done()
             if not self.creator_thread.is_alive():
                 break
-        self.progress.set(0)
-        self.status.config(text="Done!", foreground="black")
+        if stopped:
+            self.progress.set(0)
+            self.status.config(text="Done!", foreground="black")
+        else:
+            self.progressbar.stop()
+            self.progress.set(0)
+            self.progressbar["mode"] = "determinate"
 
     def file_dialog(self):
         fname = asksaveasfilename(defaultextension=".epub",
