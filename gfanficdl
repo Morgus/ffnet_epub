@@ -4,10 +4,13 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter.filedialog import asksaveasfilename
-import threading, queue, os
+import threading
+import queue
+import os
 from urllib.parse import urlparse
 from math import floor
 import backend
+
 
 class App(ttk.Frame):
     def __init__(self, master):
@@ -32,12 +35,14 @@ class App(ttk.Frame):
         container.pack(fill=tk.X, expand=1)
         label = ttk.Label(container, text="URL:")
         label.pack(side=tk.LEFT)
-        self.entry = ttk.Entry(container, validate="focusout",
-                validatecommand=self.validate_url, textvariable=self.url)
+        self.entry = ttk.Entry(
+            container, validate="focusout",
+            validatecommand=self.validate_url, textvariable=self.url)
         self.entry.bind("<Key-Return>", self.download_binding)
         self.entry.pack(side=tk.LEFT, fill=tk.X, expand=1, padx=5)
-        self.dl_button = ttk.Button(container, text="Download",
-                command=self.download_button, width=15)
+        self.dl_button = ttk.Button(
+            container, text="Download",
+            command=self.download_button, width=15)
         self.dl_button.pack(side=tk.LEFT)
         # Row 1
         container = ttk.Frame(frame)
@@ -46,14 +51,15 @@ class App(ttk.Frame):
         label.pack(side=tk.LEFT)
         self.path_entry = ttk.Entry(container, textvariable=self.path)
         self.path_entry.bind("<Key-Return>", self.download_binding)
-        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=1,
-                padx=5)
-        self.file_button = ttk.Button(container, text="...",
-                command=self.file_dialog, width=3)
+        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=1, padx=5)
+        self.file_button = ttk.Button(
+            container, text="...",
+            command=self.file_dialog, width=3)
         self.file_button.pack(side=tk.LEFT)
         # Row 2
-        self.status = ttk.Label(frame, text="0 chapters done",
-                foreground="grey")
+        self.status = ttk.Label(
+            frame, text="0 chapters done",
+            foreground="grey")
         self.status.pack()
         # Row 3
         self.progressbar = ttk.Progressbar(frame, variable=self.progress)
@@ -72,14 +78,14 @@ class App(ttk.Frame):
         path = self.path.get()
         if path:
             self.creator_thread = threading.Thread(
-                    target=self._create_document,
-                    args=(url, path), daemon=True)
+                target=self._create_document,
+                args=(url, path), daemon=True)
         else:
             self.creator_thread = threading.Thread(
-                    target=backend.create_document,
-                    args=(url, 2, None), daemon=True)
+                target=backend.create_document,
+                args=(url, 2, None), daemon=True)
         self.progress_thread = threading.Thread(
-                target=self._check_progress, daemon=True)
+            target=self._check_progress, daemon=True)
         self.creator_thread.start()
         self.progress_thread.start()
 
@@ -103,8 +109,8 @@ class App(ttk.Frame):
                 if progress[1]:
                     chapters = progress[1]
                 self.status.config(
-                        text="{}/{} chapters done".format(ch_done, chapters),
-                        foreground="black")
+                    text="{}/{} chapters done".format(ch_done, chapters),
+                    foreground="black")
                 if not stopped:
                     self.progressbar.stop()
                     stopped = True
@@ -122,8 +128,9 @@ class App(ttk.Frame):
             self.progressbar["mode"] = "determinate"
 
     def file_dialog(self):
-        fname = asksaveasfilename(defaultextension=".epub",
-                initialfile="%author - %title.epub", parent=self.master)
+        fname = asksaveasfilename(
+            defaultextension=".epub",
+            initialfile="%author - %title.epub", parent=self.master)
         if fname:
             self.path.set(fname)
 
@@ -131,8 +138,9 @@ class App(ttk.Frame):
         url = self.url.get()
         result = urlparse(url)
         if not result.netloc or not result.path:
-            self.status.config(text="Invalid URL, (maybe missing http(s)://?)",
-                    foreground="red")
+            self.status.config(
+                text="Invalid URL, (maybe missing http(s)://?)",
+                foreground="red")
             return False
         self.status.config(text="0 chapters done", foreground="grey")
         return True
@@ -143,4 +151,3 @@ if __name__ == "__main__":
     app.master.title("Fanfic downloader")
     app.master.minsize(width=500, height=115)
     app.mainloop()
-

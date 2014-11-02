@@ -21,13 +21,13 @@ xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
 media-type="application/oebps-package+xml" /></rootfiles>
 </container>"""
 
+
 def toc(story_info, chapters):
     navpoints_list = ["""\
 <navPoint id="a{0}" playOrder="{1}">
 <navLabel><text>Chapter {0}</text></navLabel>
 <content src="Chapters/ch{0}.html" />
-</navPoint>""".format(i, i-1)
-        for i in range(1, chapters+1)]
+</navPoint>""".format(i, i-1) for i in range(1, chapters+1)]
 
     navpoints = "".join(navpoints_list)
     toc_string = "".join(["""\
@@ -40,8 +40,9 @@ xml:lang="eng">
 <meta content="0" name="dtb:maxPageNumber"/></head>
 <docTitle><text>{}</text></docTitle><navMap>
 """.format(story_info["id"], story_info["title"]),
-           navpoints, "</navMap></ncx>"])
+        navpoints, "</navMap></ncx>"])
     return toc_string
+
 
 def contents(story_info, chapters):
     t = datetime.utcnow()
@@ -73,7 +74,7 @@ media-type="application/xhtml+xml" />
     items = "".join(items_list)
     contents.append(items)
     contents.append(
-            "</manifest><spine toc=\"ncx\"><itemref idref=\"titlepage\" />")
+        "</manifest><spine toc=\"ncx\"><itemref idref=\"titlepage\" />")
 
     itemref_list = ["<itemref idref=\"ch{}\" />".format(i)
                     for i in range(1, chapters+1)]
@@ -84,4 +85,3 @@ media-type="application/xhtml+xml" />
 <guide><reference href="titlepage.html" type="cover" title="Cover"/></guide>
 </package>""")
     return "".join(contents)
-
